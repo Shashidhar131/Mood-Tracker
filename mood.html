@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mood Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4eaf5 100%);
+            min-height: 100vh;
+        }
+        .calendar-day {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .calendar-day:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .emoji-btn {
+            transition: transform 0.2s;
+        }
+        .emoji-btn:hover {
+            transform: scale(1.15);
+        }
+        .emoji-btn.selected {
+            transform: scale(1.15);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-indigo-800 mb-2">Mood Tracker</h1>
+            <p class="text-gray-600">Track how you feel each day with emojis and see patterns over time</p>
+        </header>
+
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">How are you feeling today?</h2>
+            
+            <div class="flex flex-wrap justify-center gap-4 mb-6" id="mood-selector">
+                <button class="emoji-btn bg-red-100 hover:bg-red-200 rounded-full p-4 flex flex-col items-center w-20 h-20" data-mood="awful" data-color="#FCA5A5">
+                    <span class="text-3xl">😫</span>
+                    <span class="text-xs mt-1">Awful</span>
+                </button>
+                <button class="emoji-btn bg-orange-100 hover:bg-orange-200 rounded-full p-4 flex flex-col items-center w-20 h-20" data-mood="bad" data-color="#FDBA74">
+                    <span class="text-3xl">😔</span>
+                    <span class="text-xs mt-1">Bad</span>
+                </button>
+                <button class="emoji-btn bg-yellow-100 hover:bg-yellow-200 rounded-full p-4 flex flex-col items-center w-20 h-20" data-mood="okay" data-color="#FDE68A">
+                    <span class="text-3xl">😐</span>
+                    <span class="text-xs mt-1">Okay</span>
+                </button>
+                <button class="emoji-btn bg-lime-100 hover:bg-lime-200 rounded-full p-4 flex flex-col items-center w-20 h-20" data-mood="good" data-color="#BEF264">
+                    <span class="text-3xl">🙂</span>
+                    <span class="text-xs mt-1">Good</span>
+                </button>
+                <button class="emoji-btn bg-green-100 hover:bg-green-200 rounded-full p-4 flex flex-col items-center w-20 h-20" data-mood="great" data-color="#86EFAC">
+                    <span class="text-3xl">😁</span>
+                    <span class="text-xs mt-1">Great</span>
+                </button>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <label for="mood-note" class="text-gray-700 font-medium">Add a note:</label>
+                    <input type="text" id="mood-note" class="border rounded-lg px-3 py-2 flex-grow w-full sm:w-auto" placeholder="Optional note about your day">
+                </div>
+                <button id="save-mood" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+                    Save Today's Mood
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold text-gray-800">Your Mood Calendar</h2>
+                <div class="flex gap-2">
+                    <button id="prev-month" class="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <button id="next-month" class="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h3 id="calendar-month" class="text-xl font-medium text-center text-gray-700"></h3>
+            </div>
+
+            <div class="grid grid-cols-7 gap-1 text-center mb-2">
+                <div class="text-sm font-medium text-gray-500">Sun</div>
+                <div class="text-sm font-medium text-gray-500">Mon</div>
+                <div class="text-sm font-medium text-gray-500">Tue</div>
+                <div class="text-sm font-medium text-gray-500">Wed</div>
+                <div class="text-sm font-medium text-gray-500">Thu</div>
+                <div class="text-sm font-medium text-gray-500">Fri</div>
+                <div class="text-sm font-medium text-gray-500">Sat</div>
+            </div>
+
+            <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
+
+            <div class="mt-6">
+                <h3 class="text-lg font-medium text-gray-700 mb-2">Mood Legend</h3>
+                <div class="flex flex-wrap gap-3">
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded bg-red-300 mr-1"></div>
+                        <span class="text-sm">Awful</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded bg-orange-300 mr-1"></div>
+                        <span class="text-sm">Bad</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded bg-yellow-300 mr-1"></div>
+                        <span class="text-sm">Okay</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded bg-lime-300 mr-1"></div>
+                        <span class="text-sm">Good</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded bg-green-300 mr-1"></div>
+                        <span class="text-sm">Great</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mood Details Modal -->
+        <div id="mood-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold" id="modal-date"></h3>
+                    <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <div class="flex items-center mb-2">
+                        <span class="text-lg mr-2">Mood:</span>
+                        <span id="modal-mood" class="text-2xl"></span>
+                        <span id="modal-mood-text" class="ml-2 text-lg"></span>
+                    </div>
+                    <div id="modal-note-container">
+                        <span class="text-lg">Note:</span>
+                        <p id="modal-note" class="italic text-gray-600 mt-1"></p>
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <button id="delete-mood" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">
+                        Delete Entry
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize variables
+            let currentDate = new Date();
+            let selectedMood = null;
+            let selectedDate = new Date();
+            selectedDate.setHours(0, 0, 0, 0);
+            let currentViewMonth = currentDate.getMonth();
+            let currentViewYear = currentDate.getFullYear();
+            let moodData = JSON.parse(localStorage.getItem('moodData')) || {};
+            let selectedMoodEntry = null;
+
+            // Emoji buttons
+            const moodButtons = document.querySelectorAll('.emoji-btn');
+            const saveButton = document.getElementById('save-mood');
+            const moodNote = document.getElementById('mood-note');
+            
+            // Calendar navigation
+            const prevMonthBtn = document.getElementById('prev-month');
+            const nextMonthBtn = document.getElementById('next-month');
+            const calendarMonth = document.getElementById('calendar-month');
+            const calendarGrid = document.getElementById('calendar-grid');
+            
+            // Modal elements
+            const moodModal = document.getElementById('mood-modal');
+            const closeModal = document.getElementById('close-modal');
+            const modalDate = document.getElementById('modal-date');
+            const modalMood = document.getElementById('modal-mood');
+            const modalMoodText = document.getElementById('modal-mood-text');
+            const modalNote = document.getElementById('modal-note');
+            const modalNoteContainer = document.getElementById('modal-note-container');
+            const deleteButton = document.getElementById('delete-mood');
+
+            // Mood emoji mapping
+            const moodEmojis = {
+                'awful': '😫',
+                'bad': '😔',
+                'okay': '😐',
+                'good': '🙂',
+                'great': '😁'
+            };
+
+            // Initialize calendar
+            renderCalendar();
+
+            // Event listeners for mood buttons
+            moodButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    moodButtons.forEach(btn => btn.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedMood = {
+                        mood: this.dataset.mood,
+                        emoji: this.querySelector('span').innerText,
+                        color: this.dataset.color
+                    };
+                });
+            });
+
+            // Save mood
+            saveButton.addEventListener('click', function() {
+                if (!selectedMood) {
+                    alert('Please select a mood first!');
+                    return;
+                }
+
+                const dateKey = formatDateKey(selectedDate);
+                moodData[dateKey] = {
+                    mood: selectedMood.mood,
+                    emoji: selectedMood.emoji,
+                    color: selectedMood.color,
+                    note: moodNote.value.trim(),
+                    timestamp: new Date().getTime()
+                };
+
+                localStorage.setItem('moodData', JSON.stringify(moodData));
+                renderCalendar();
+                
+                // Reset selection
+                moodButtons.forEach(btn => btn.classList.remove('selected'));
+                moodNote.value = '';
+                selectedMood = null;
+                
+                // Show confirmation
+                alert('Mood saved successfully!');
+            });
+
+            // Calendar navigation
+            prevMonthBtn.addEventListener('click', function() {
+                currentViewMonth--;
+                if (currentViewMonth < 0) {
+                    currentViewMonth = 11;
+                    currentViewYear--;
+                }
+                renderCalendar();
+            });
+
+            nextMonthBtn.addEventListener('click', function() {
+                currentViewMonth++;
+                if (currentViewMonth > 11) {
+                    currentViewMonth = 0;
+                    currentViewYear++;
+                }
+                renderCalendar();
+            });
+
+            // Modal events
+            closeModal.addEventListener('click', function() {
+                moodModal.classList.add('hidden');
+            });
+
+            deleteButton.addEventListener('click', function() {
+                if (selectedMoodEntry) {
+                    delete moodData[selectedMoodEntry];
+                    localStorage.setItem('moodData', JSON.stringify(moodData));
+                    renderCalendar();
+                    moodModal.classList.add('hidden');
+                }
+            });
+
+            // Render calendar
+            function renderCalendar() {
+                const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                                   'July', 'August', 'September', 'October', 'November', 'December'];
+                
+                calendarMonth.textContent = `${monthNames[currentViewMonth]} ${currentViewYear}`;
+                calendarGrid.innerHTML = '';
+                
+                const firstDay = new Date(currentViewYear, currentViewMonth, 1);
+                const lastDay = new Date(currentViewYear, currentViewMonth + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                const startingDayOfWeek = firstDay.getDay();
+                
+                // Add empty cells for days before the first day of the month
+                for (let i = 0; i < startingDayOfWeek; i++) {
+                    const emptyDay = document.createElement('div');
+                    emptyDay.className = 'h-14 bg-gray-50 rounded';
+                    calendarGrid.appendChild(emptyDay);
+                }
+                
+                // Add cells for each day of the month
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(currentViewYear, currentViewMonth, day);
+                    const dateKey = formatDateKey(date);
+                    const dayMood = moodData[dateKey];
+                    
+                    const dayCell = document.createElement('div');
+                    dayCell.className = 'calendar-day h-14 rounded flex flex-col items-center justify-center relative cursor-pointer';
+                    
+                    // Check if this is today
+                    const isToday = date.toDateString() === new Date().toDateString();
+                    
+                    if (dayMood) {
+                        dayCell.style.backgroundColor = dayMood.color;
+                        dayCell.innerHTML = `
+                            <span class="text-sm font-medium ${isToday ? 'text-white bg-indigo-600 rounded-full w-6 h-6 flex items-center justify-center' : ''}">${day}</span>
+                            <span class="text-lg">${dayMood.emoji}</span>
+                        `;
+                    } else {
+                        dayCell.className += ' bg-gray-100 hover:bg-gray-200';
+                        dayCell.innerHTML = `
+                            <span class="text-sm font-medium ${isToday ? 'text-white bg-indigo-600 rounded-full w-6 h-6 flex items-center justify-center' : ''}">${day}</span>
+                        `;
+                    }
+                    
+                    // Add click event to show mood details
+                    dayCell.addEventListener('click', function() {
+                        if (dayMood) {
+                            selectedMoodEntry = dateKey;
+                            modalDate.textContent = formatDisplayDate(date);
+                            modalMood.textContent = dayMood.emoji;
+                            modalMoodText.textContent = capitalizeFirstLetter(dayMood.mood);
+                            
+                            if (dayMood.note) {
+                                modalNote.textContent = dayMood.note;
+                                modalNoteContainer.classList.remove('hidden');
+                            } else {
+                                modalNoteContainer.classList.add('hidden');
+                            }
+                            
+                            moodModal.classList.remove('hidden');
+                        }
+                    });
+                    
+                    calendarGrid.appendChild(dayCell);
+                }
+            }
+
+            // Helper functions
+            function formatDateKey(date) {
+                return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+            }
+            
+            function formatDisplayDate(date) {
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                return date.toLocaleDateString('en-US', options);
+            }
+            
+            function capitalizeFirstLetter(string) {
+                return string.charAt(0).toUpperCase() + string.slice(1);
+            }
+        });
+    </script>
+</body>
+</html>
